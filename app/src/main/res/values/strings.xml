@@ -1,6 +1,22 @@
 <resources>
-    <string name="app_name">security_essentials</string>
-    <string name="txt_email">Correo</string>
-    <string name="txt_password">Clave</string>
-    <string name="btn_txt_login">Ingresar</string>
+    <string name="app_name">Security Essentials</string>
+
+    <string name="txt_title_login">Login</string>
+    <string name="txt_title_home">Home</string>
+    <string name="toolbar_title_create_account">Create Account</string>
+
+    <string name="txt_name">Name</string>
+    <string name="txt_email">Email</string>
+    <string name="txt_password">Password</string>
+    <string name="txt_confirm_password">Confirm Password</string>
+
+    <string name="txt_btn_login">SING IN</string>
+    <string name="txt_btn_create_an_account">Create an account</string>
+    <string name="txt_btn_save">SAVE</string>
+
+    <string name="txt_get">GET </string>
+    <string name="txt_name_test">Fabio Lopez</string>
+    <string name="txt_email_test">fabio.lopez@gmail.com</string>
+    <string name="txt_lat_long_test">Lat / Long</string>
+    <string name="txt_phone_test">3002229999</string>
 </resources>
