@@ -1,24 +1,35 @@
 package com.fabiolopz.security_essencials
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_create_account.*
+import java.nio.charset.Charset
+import javax.crypto.Cipher
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
+
 
 class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
+
     //region statement
     private lateinit var fieldEmail: EditText
     private lateinit var fieldPassword: EditText
     private lateinit var fieldConfirmPassword: EditText
     private lateinit var buttonLogin: Button
     private lateinit var buttonCreateAccount: Button
+
+    //Encrypt
+    private val keySecret:String = "fabio andres lopez perez"
+    private lateinit var secret: SecretKeySpec
+
     //FireBase
     private lateinit var auth: FirebaseAuth
     //endregion
@@ -86,6 +97,24 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             }
     }
 
+    //Encrypt
+    private fun generateKey(): SecretKey? {
+        return SecretKeySpec(keySecret.toByteArray(), "AES").also { secret = it }
+    }
+
+    private fun encryptMsg(message: String, secret: SecretKey?): ByteArray? {
+        var cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, secret)
+        return cipher.doFinal(message.toByteArray(charset("UTF-8")))
+    }
+
+    private fun decryptMsg(cipherText: ByteArray?, secret: SecretKey?): String? {
+        var cipher: Cipher? = null
+        cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
+        cipher.init(Cipher.DECRYPT_MODE, secret)
+        return String(cipher.doFinal(cipherText), charset("UTF-8"))
+    }
+
     private fun showLoginActivity(){
         val login = Intent(this, LoginActivity::class.java)
         startActivity(login)
@@ -112,6 +141,13 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             R.id.buttonLoginCA -> showLoginActivity()
             R.id.buttonCreateAccountCA -> {
                 if(validateForm()){
+                    val keyGenerate = generateKey()
+                    val resultEncrypt = encryptMsg(fieldPassword.text.toString(), keyGenerate)
+                    val resultDecryptMsg = decryptMsg(resultEncrypt, keyGenerate)
+                    createAccount(fieldEmail.text.toString(), resultDecryptMsg!!)
+
+                    //Log.w(TAG, "El resultadoEncrypt es $resultEncrypt")
+                    //Log.w(TAG, "El resultadoDEEEEESEncrypt es $resultDecryptMsg")
                     createAccount(fieldEmail.text.toString(), fieldPassword.text.toString())
                 }
             }
