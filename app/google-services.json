@@ -8,17 +8,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:845535010397:android:c4d3bfc969dd963b17f7b4",
+        "mobilesdk_app_id": "1:845535010397:android:f2ce4843df76e7cc17f7b4",
         "android_client_info": {
-          "package_name": "com.fabiolopz.security_essencials"
+          "package_name": "com.fabiolopz.security_essentials"
         }
       },
       "oauth_client": [
         {
-          "client_id": "845535010397-6qv4fvjq1pe2lv8m80jqb8p3n9g9ks0l.apps.googleusercontent.com",
+          "client_id": "845535010397-jg5ia655vdk9l2aua22un152g9gun6q9.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.fabiolopz.security_essencials",
+            "package_name": "com.fabiolopz.security_essentials",
             "certificate_hash": "9ca5d44360345ab9b1c258b5689ffa3f3a2d50b5"
           }
         },

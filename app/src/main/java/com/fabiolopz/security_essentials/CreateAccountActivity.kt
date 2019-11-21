@@ -1,4 +1,4 @@
-package com.fabiolopz.security_essencials
+package com.fabiolopz.security_essentials
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.activity_create_account.*
 import java.nio.charset.Charset
 import javax.crypto.Cipher
@@ -20,6 +21,7 @@ import javax.crypto.spec.SecretKeySpec
 class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
 
     //region statement
+    private lateinit var user: User
     private lateinit var fieldEmail: EditText
     private lateinit var fieldPassword: EditText
     private lateinit var fieldConfirmPassword: EditText
@@ -59,7 +61,12 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             utilInputPasswordCA.error = "Required."
             valid = false
         } else {
-            utilInputPasswordCA.error = null
+            if(password.length < 6){
+                utilInputPasswordCA.error = "Password should be min 6."
+                valid = false
+            } else {
+                utilInputPasswordCA.error = null
+            }
         }
         if (confirmPassword.isEmpty()) {
             utilInputConfirmPassCA.error = "Required."
@@ -84,8 +91,10 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
                 if (task.isSuccessful) {
                     // Sign in success, update UI with the signed-in user's information
                     Log.d(TAG, "createUserWithEmail:success")
-                    val user = auth.currentUser
-                    Log.d(TAG, "usuario: ${user!!.email} success")
+                    val currentUser: FirebaseUser? = auth.currentUser
+                    user = User(currentUser!!.uid, currentUser.displayName!!, currentUser.email!!)
+                    Log.d(TAG, "usuario: ${user.email} success")
+                    showHomeActivity(user)
                     // updateUI(user)
                 } else {
                     // If sign in fails, display a message to the user.
@@ -109,10 +118,15 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun decryptMsg(cipherText: ByteArray?, secret: SecretKey?): String? {
-        var cipher: Cipher? = null
-        cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
-        cipher.init(Cipher.DECRYPT_MODE, secret)
-        return String(cipher.doFinal(cipherText), charset("UTF-8"))
+        var cipher: Cipher? = Cipher.getInstance("AES/ECB/PKCS5Padding")
+        cipher?.init(Cipher.DECRYPT_MODE, secret)
+        return String(cipher!!.doFinal(cipherText), charset("UTF-8"))
+    }
+
+    private fun showHomeActivity(user: User){
+        val home = Intent(this, HomeActivity::class.java)
+        home.putExtra(OBJ_USER, user)
+        startActivity(home)
     }
 
     private fun showLoginActivity(){
@@ -121,7 +135,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun showToolbar(title:String, upButton:Boolean = true){
-        val toolbar = findViewById<Toolbar>(R.id.toolbarCA)
+        val toolbar:Toolbar = findViewById(R.id.toolbarCA)
         setSupportActionBar(toolbar)
         supportActionBar?.title = title
         supportActionBar?.setDisplayHomeAsUpEnabled(upButton)
@@ -141,9 +155,9 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             R.id.buttonLoginCA -> showLoginActivity()
             R.id.buttonCreateAccountCA -> {
                 if(validateForm()){
-                    val keyGenerate = generateKey()
-                    val resultEncrypt = encryptMsg(fieldPassword.text.toString(), keyGenerate)
-                    val resultDecryptMsg = decryptMsg(resultEncrypt, keyGenerate)
+                    val keyGenerate: SecretKey? = generateKey()
+                    val resultEncrypt: ByteArray? = encryptMsg(fieldPassword.text.toString(), keyGenerate)
+                    val resultDecryptMsg: String? = decryptMsg(resultEncrypt, keyGenerate)
                     createAccount(fieldEmail.text.toString(), resultDecryptMsg!!)
 
                     //Log.w(TAG, "El resultadoEncrypt es $resultEncrypt")
@@ -156,5 +170,6 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
 
     companion object {
         const val TAG = "Message_CA_Activity"
+        const val OBJ_USER = "User"
     }
 }
