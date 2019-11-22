@@ -159,10 +159,6 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
                     val resultEncrypt: ByteArray? = encryptMsg(fieldPassword.text.toString(), keyGenerate)
                     val resultDecryptMsg: String? = decryptMsg(resultEncrypt, keyGenerate)
                     createAccount(fieldEmail.text.toString(), resultDecryptMsg!!)
-
-                    //Log.w(TAG, "El resultadoEncrypt es $resultEncrypt")
-                    //Log.w(TAG, "El resultadoDEEEEESEncrypt es $resultDecryptMsg")
-                    createAccount(fieldEmail.text.toString(), fieldPassword.text.toString())
                 }
             }
         }

@@ -38,7 +38,7 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         // Check if user is signed in (non-null) and update UI accordingly.
         val currentUser:FirebaseUser? = auth.currentUser
         if(currentUser != null){
-            user = User(currentUser.uid, currentUser.displayName!!, currentUser.email!!)
+            user = User(currentUser.uid, currentUser.displayName, currentUser.email!!)
             Log.d(TAG, "usuario: ${user!!.email} success")
             showHomeActivity(user)
         }
@@ -51,10 +51,15 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
                     // Sign in success, update UI with the signed-in user's information
                     Log.d(TAG, "signInWithEmail:success")
                     val currentUser: FirebaseUser? = auth.currentUser
-                    user = User(currentUser!!.uid, currentUser.displayName!!, currentUser.email!!)
-                    showHomeActivity(user)
-                    //pendiente crear el metodo de abajo
-                    //updateUI(user)
+                    if(currentUser != null) {
+                        var name:String? = currentUser.displayName
+                        if(name == "" || name == null){
+                            name = "N/A"
+                        }
+                        user =
+                            User(currentUser.uid, name, currentUser.email!!)
+                        showHomeActivity(user)
+                    }
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithEmail:failure", task.exception)
