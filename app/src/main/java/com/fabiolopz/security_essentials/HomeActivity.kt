@@ -18,6 +18,7 @@ import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 
 class HomeActivity : AppCompatActivity(), View.OnClickListener,
@@ -39,8 +40,6 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener,
     private lateinit var auth: FirebaseAuth
     private lateinit var googleApiClient: GoogleApiClient
     private lateinit var locationRequest: LocationRequest
-
-    //private var mFusedLocationClient: FusedLocationProviderClient? = null
     //endregion
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -158,7 +157,7 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener,
     override fun onConnectionFailed(p0: ConnectionResult) {
         //Se ha producido un error que no se puede resolver automáticamente
         //y la conexión con los Google Play Services no se ha establecido.
-        Log.e(LOG_TAG, "Error grave al conectar con Google Play Services");
+        Log.e(LOG_TAG, "Error grave al conectar con Google Play Services")
     }
 
     override fun onRequestPermissionsResult(
@@ -202,7 +201,7 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener,
 
     override fun onConnectionSuspended(p0: Int) {
         //Se ha interrumpido la conexión con Google Play Services
-        Log.e(LOG_TAG, "Se ha interrumpido la conexión con Google Play Services");
+        Log.e(LOG_TAG, "Se ha interrumpido la conexión con Google Play Services")
     }
 
     override fun onLocationChanged(location: Location?) {

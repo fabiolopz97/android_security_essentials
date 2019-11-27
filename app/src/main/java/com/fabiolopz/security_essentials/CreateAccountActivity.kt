@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_create_account.*
 import java.nio.charset.Charset
 import javax.crypto.Cipher
@@ -27,6 +29,9 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var fieldConfirmPassword: EditText
     private lateinit var buttonLogin: Button
     private lateinit var buttonCreateAccount: Button
+    // Write a message to the database
+    private lateinit var database: FirebaseDatabase
+    private lateinit var myRef: DatabaseReference
 
     //Encrypt
     private val keySecret:String = "fabio andres lopez perez"
@@ -43,6 +48,9 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
         initComponent()
         buttonLogin.setOnClickListener(this)
         buttonCreateAccount.setOnClickListener(this)
+        // Database
+        myRef = database.reference
+        //myRef.setValue("Hello, World!")
     }
 
     private fun validateForm(): Boolean {
@@ -85,6 +93,11 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
     private fun validatePassword(password:String, confirmPassword:String): Boolean =
         (password == "") || (confirmPassword == "")
 
+    private fun writeNewUser(user: User) {
+        //val user = User(userId, email)
+        myRef.child("user").child(user.UID!!).setValue(user)
+    }
+
     private fun createAccount(email:String, password:String){
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
@@ -92,8 +105,9 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
                     // Sign in success, update UI with the signed-in user's information
                     Log.d(TAG, "createUserWithEmail:success")
                     val currentUser: FirebaseUser? = auth.currentUser
-                    user = User(currentUser!!.uid, currentUser.displayName!!, currentUser.email!!)
-                    Log.d(TAG, "usuario: ${user.email} success")
+                    user = User(currentUser!!.uid, currentUser.displayName, currentUser.email)
+                    //Log.d(TAG, "usuario: ${user.email} success")
+                    writeNewUser(user)
                     showHomeActivity(user)
                     // updateUI(user)
                 } else {
@@ -125,6 +139,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun showHomeActivity(user: User){
         val home = Intent(this, HomeActivity::class.java)
+        user.name = ""
         home.putExtra(OBJ_USER, user)
         startActivity(home)
     }
@@ -148,6 +163,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
         buttonLogin = findViewById(R.id.buttonLoginCA)
         buttonCreateAccount = findViewById(R.id.buttonCreateAccountCA)
         auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance()
     }
 
     override fun onClick(v: View?) {
