@@ -1,7 +1,10 @@
 package com.fabiolopz.security_essentials
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -14,9 +17,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_create_account.*
-import java.nio.charset.Charset
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
+import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 
@@ -34,7 +37,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var myRef: DatabaseReference
 
     //Encrypt
-    private val keySecret:String = "fabio andres lopez perez"
+    private val keySecret: String = "fabio andres lopez perez"
     private lateinit var secret: SecretKeySpec
 
     //FireBase
@@ -55,9 +58,9 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun validateForm(): Boolean {
         var valid = true
-        val email:String = fieldEmail.text.toString()
-        val password:String = fieldPassword.text.toString()
-        val confirmPassword:String = fieldConfirmPassword.text.toString()
+        val email: String = fieldEmail.text.toString()
+        val password: String = fieldPassword.text.toString()
+        val confirmPassword: String = fieldConfirmPassword.text.toString()
 
         if (email.isEmpty()) {
             utilInputEmailCA.error = "Required."
@@ -69,7 +72,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             utilInputPasswordCA.error = "Required."
             valid = false
         } else {
-            if(password.length < 6){
+            if (password.length < 6) {
                 utilInputPasswordCA.error = "Password should be min 6."
                 valid = false
             } else {
@@ -82,15 +85,17 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
         } else {
             utilInputConfirmPassCA.error = null
         }
-        if(validatePassword(password, confirmPassword)){
-            Toast.makeText(baseContext, "Incorrect password.",
-                Toast.LENGTH_SHORT).show()
+        if (validatePassword(password, confirmPassword)) {
+            Toast.makeText(
+                baseContext, "Incorrect password.",
+                Toast.LENGTH_SHORT
+            ).show()
             valid = false
         }
         return valid
     }
 
-    private fun validatePassword(password:String, confirmPassword:String): Boolean =
+    private fun validatePassword(password: String, confirmPassword: String): Boolean =
         (password == "") || (confirmPassword == "")
 
     private fun writeNewUser(user: User) {
@@ -98,7 +103,16 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
         myRef.child("user").child(user.UID!!).setValue(user)
     }
 
-    private fun createAccount(email:String, password:String){
+    private fun saveUserSharedPreferences(user: User){
+        val preference: SharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE)
+        val  editor: SharedPreferences.Editor = preference.edit()
+        editor.putString("uid", user.UID)
+        editor.putString("email", user.email)
+        editor.putString("name", "N/A")
+        editor.commit()
+    }
+
+    private fun createAccount(email: String, password: String) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
@@ -108,18 +122,24 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
                     user = User(currentUser!!.uid, currentUser.displayName, currentUser.email)
                     //Log.d(TAG, "usuario: ${user.email} success")
                     writeNewUser(user)
+                    saveUserSharedPreferences(user)
                     showHomeActivity(user)
                     // updateUI(user)
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        baseContext, "Authentication failed.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     // updateUI(null)
                 }
             }
     }
 
+    /**
+     * No son usados estos tres metodos en este proyecto
+     */
     //Encrypt
     private fun generateKey(): SecretKey? {
         return SecretKeySpec(keySecret.toByteArray(), "AES").also { secret = it }
@@ -171,10 +191,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             R.id.buttonLoginCA -> showLoginActivity()
             R.id.buttonCreateAccountCA -> {
                 if(validateForm()){
-                    val keyGenerate: SecretKey? = generateKey()
-                    val resultEncrypt: ByteArray? = encryptMsg(fieldPassword.text.toString(), keyGenerate)
-                    val resultDecryptMsg: String? = decryptMsg(resultEncrypt, keyGenerate)
-                    createAccount(fieldEmail.text.toString(), resultDecryptMsg!!)
+                    createAccount(fieldEmail.text.toString(), String.encrypt(fieldPassword.text.toString()))
                 }
             }
         }
@@ -184,4 +201,35 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
         const val TAG = "Message_CA_Activity"
         const val OBJ_USER = "User"
     }
+
+    private fun String.Companion.encrypt(password: String): String {
+        val secretKeySpec = SecretKeySpec(keySecret.toByteArray(), "AES")
+        val iv = ByteArray(16)
+        val charArray = password.toCharArray()
+        for (i in charArray.indices) {
+            iv[i] = charArray[i].toByte()
+        }
+        val ivParameterSPec = IvParameterSpec(iv)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSPec)
+        val encryptedValue = cipher.doFinal()
+        return Base64.encodeToString(encryptedValue, Base64.DEFAULT)
+    }
+
+    private fun String.Companion.decrypt(password: String): String{
+        val secretKeySpec = SecretKeySpec(password.toByteArray(), "AES")
+        val iv = ByteArray(16)
+        val charArray = password.toCharArray()
+        for(element in charArray){
+            iv[0] = element.toByte()
+        }
+        val ivParameterSpec = IvParameterSpec(iv)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec)
+        val decryptedByteValue = cipher.doFinal()
+        return String(decryptedByteValue)
+    }
+
 }
+
+

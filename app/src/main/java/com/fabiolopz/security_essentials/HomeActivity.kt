@@ -1,7 +1,9 @@
 package com.fabiolopz.security_essentials
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -52,8 +54,7 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener,
         buttonSave.setOnClickListener(this)
         buttonSignOutH.setOnClickListener(this)
 
-        val dataIntent: Bundle = intent.extras!!
-        val user: User = dataIntent.getSerializable(OBJ_USER) as User
+        showUserSharedPreferences()
         updateDataUI(user)
         googleApiClient = GoogleApiClient.Builder(this)
             .enableAutoManage(this, this)
@@ -72,24 +73,13 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener,
         startActivity(login)
     }
 
-    /*private fun getCurrentUser(){
-        val currentUser:FirebaseUser? = auth.currentUser
-        user = User(currentUser!!.uid, currentUser.displayName!!, currentUser.email!!)
-        /*user?.let {
-            // Name, email address, and profile photo Url
-            val name: String? = user.displayName
-            val email: String? = user.email
-            //val photoUrl: Uri? = user.photoUrl
-
-            // Check if user's email is verified
-            //val emailVerified: Boolean = user.isEmailVerified
-
-            // The user's ID, unique to the Firebase project. Do NOT use this value to
-            // authenticate with your backend server, if you have one. Use
-            // FirebaseUser.getToken() instead.
-            val uid: String = user.uid
-        }*/
-    }*/
+    private fun showUserSharedPreferences(){
+        val preference: SharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE)
+        val uid = preference.getString("uid", "")
+        val email = preference.getString("email", "Error")
+        val name = preference.getString("name", "N/A")
+        user = User(uid, name, email)
+    }
 
     private fun updateDataUI(user: User) {
         if (user.name != "") {
@@ -140,7 +130,6 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener,
     companion object {
         const val TAG = "Message_H_Activity"
         const val LOG_TAG = "Message_Log"
-        const val OBJ_USER = "User"
         //region statement
         const val PETITION_PERMIT_LOCATION = 101
         const val UPDATE_INTERVAL: Long = 500

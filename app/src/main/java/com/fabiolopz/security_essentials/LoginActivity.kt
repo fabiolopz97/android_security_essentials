@@ -1,8 +1,11 @@
 package com.fabiolopz.security_essentials
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -11,6 +14,9 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.android.synthetic.main.activity_login.*
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 class LoginActivity : AppCompatActivity(), View.OnClickListener {
     //region statement
@@ -21,6 +27,7 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var buttonCreateAccount: Button
     //FireBase
     private lateinit var auth: FirebaseAuth
+    private val keySecret: String = "fabio andres lopez perez"
     //endregion
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +37,6 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         initComponent()
         buttonLogin.setOnClickListener(this)
         buttonCreateAccount.setOnClickListener(this)
-
     }
 
     public override fun onStart() {
@@ -39,8 +45,8 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         val currentUser:FirebaseUser? = auth.currentUser
         if(currentUser != null){
             user = User(currentUser.uid, currentUser.displayName, currentUser.email!!)
-            Log.d(TAG, "usuario: ${user!!.email} success")
-            showHomeActivity(user)
+            Log.d(TAG, "usuario: ${user.email} success")
+            showHomeActivity()
         }
     }
 
@@ -58,7 +64,8 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
                         }
                         user =
                             User(currentUser.uid, name, currentUser.email!!)
-                        showHomeActivity(user)
+                        saveUserSharedPreferences(user)
+                        showHomeActivity()
                     }
                 } else {
                     // If sign in fails, display a message to the user.
@@ -89,10 +96,17 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         return valid
     }
 
-    private fun showHomeActivity(user: User){
-        val home = Intent(this, HomeActivity::class.java)
-        home.putExtra(OBJ_USER, user)
-        startActivity(home)
+    private fun saveUserSharedPreferences(user: User){
+        val preference: SharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE)
+        val  editor: SharedPreferences.Editor = preference.edit()
+        editor.putString("uid", user.UID)
+        editor.putString("email", user.email)
+        editor.putString("name", "N/A")
+        editor.commit()
+    }
+
+    private fun showHomeActivity(){
+        startActivity(Intent(this, HomeActivity::class.java))
     }
 
     private fun showCreateAccountActivity(){
@@ -112,7 +126,7 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         when (v?.id){
             R.id.buttonLoginL -> {
                 if(validateForm()){
-                    singIn(fieldEmail.text.toString(), fieldPassword.text.toString())
+                    singIn(fieldEmail.text.toString(), String.encrypt(fieldPassword.text.toString()))
                 }
             }
             R.id.buttonCreateAccountL -> showCreateAccountActivity()
@@ -121,7 +135,19 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
 
     companion object {
         const val TAG = "Message_L_Activity"
-        const val OBJ_USER = "User"
+    }
 
+    private fun String.Companion.encrypt(password: String): String {
+        val secretKeySpec = SecretKeySpec(keySecret.toByteArray(), "AES")
+        val iv = ByteArray(16)
+        val charArray = password.toCharArray()
+        for (i in charArray.indices) {
+            iv[i] = charArray[i].toByte()
+        }
+        val ivParameterSPec = IvParameterSpec(iv)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSPec)
+        val encryptedValue = cipher.doFinal()
+        return Base64.encodeToString(encryptedValue, Base64.DEFAULT)
     }
 }
