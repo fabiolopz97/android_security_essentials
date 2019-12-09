@@ -28,13 +28,14 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
     //region statement
     private lateinit var user: User
     private lateinit var fieldEmail: EditText
+    private lateinit var fieldName: EditText
     private lateinit var fieldPassword: EditText
     private lateinit var fieldConfirmPassword: EditText
     private lateinit var buttonLogin: Button
     private lateinit var buttonCreateAccount: Button
-    // Write a message to the database
     private lateinit var database: FirebaseDatabase
     private lateinit var myRef: DatabaseReference
+    private var databaseHelper: DBHelper? = null
 
     //Encrypt
     private val keySecret: String = "fabio andres lopez perez"
@@ -59,6 +60,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
     private fun validateForm(): Boolean {
         var valid = true
         val email: String = fieldEmail.text.toString()
+        val name: String = fieldName.text.toString()
         val password: String = fieldPassword.text.toString()
         val confirmPassword: String = fieldConfirmPassword.text.toString()
 
@@ -67,6 +69,12 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             valid = false
         } else {
             utilInputEmailCA.error = null
+        }
+        if (name.isEmpty()) {
+            utilInputNameCA.error = "Required."
+            valid = false
+        } else {
+            utilInputNameCA.error = null
         }
         if (password.isEmpty()) {
             utilInputPasswordCA.error = "Required."
@@ -103,24 +111,29 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
         myRef.child("user").child(user.UID!!).setValue(user)
     }
 
+    private fun savedUserDBLite(user: User){
+        databaseHelper?.insertRow(user.name!!, user.email!!, user.UID!!)
+    }
+
     private fun saveUserSharedPreferences(user: User){
         val preference: SharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE)
         val  editor: SharedPreferences.Editor = preference.edit()
         editor.putString("uid", user.UID)
         editor.putString("email", user.email)
-        editor.putString("name", "N/A")
+        editor.putString("name", user.name)
         editor.commit()
     }
 
-    private fun createAccount(email: String, password: String) {
+    private fun createAccount(name:String, email: String, password: String) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     // Sign in success, update UI with the signed-in user's information
                     Log.d(TAG, "createUserWithEmail:success")
                     val currentUser: FirebaseUser? = auth.currentUser
-                    user = User(currentUser!!.uid, currentUser.displayName, currentUser.email)
+                    user = User(currentUser!!.uid, name, currentUser.email)
                     //Log.d(TAG, "usuario: ${user.email} success")
+                    savedUserDBLite(user)
                     writeNewUser(user)
                     saveUserSharedPreferences(user)
                     showHomeActivity(user)
@@ -159,7 +172,6 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun showHomeActivity(user: User){
         val home = Intent(this, HomeActivity::class.java)
-        user.name = ""
         home.putExtra(OBJ_USER, user)
         startActivity(home)
     }
@@ -178,12 +190,14 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun initComponent(){
         fieldEmail = findViewById(R.id.editTextEmailCA)
+        fieldName = findViewById(R.id.editTextNameCA)
         fieldPassword = findViewById(R.id.editTextPasswordCA)
         fieldConfirmPassword = findViewById(R.id.editTextConfirmPasswordCA)
         buttonLogin = findViewById(R.id.buttonLoginCA)
         buttonCreateAccount = findViewById(R.id.buttonCreateAccountCA)
         auth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance()
+        databaseHelper = DBHelper(this, null)
     }
 
     override fun onClick(v: View?) {
@@ -191,7 +205,7 @@ class CreateAccountActivity : AppCompatActivity(), View.OnClickListener {
             R.id.buttonLoginCA -> showLoginActivity()
             R.id.buttonCreateAccountCA -> {
                 if(validateForm()){
-                    createAccount(fieldEmail.text.toString(), String.encrypt(fieldPassword.text.toString()))
+                    createAccount(fieldName.text.toString(), fieldEmail.text.toString(), String.encrypt(fieldPassword.text.toString()))
                 }
             }
         }

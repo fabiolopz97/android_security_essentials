@@ -70,9 +70,11 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
-                    //updateUI(null)
+                    Toast.makeText(
+                        baseContext,
+                        "Authentication failed.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
     }
@@ -101,7 +103,7 @@ class LoginActivity : AppCompatActivity(), View.OnClickListener {
         val  editor: SharedPreferences.Editor = preference.edit()
         editor.putString("uid", user.UID)
         editor.putString("email", user.email)
-        editor.putString("name", "N/A")
+        editor.putString("name", user.name)
         editor.commit()
     }
 
